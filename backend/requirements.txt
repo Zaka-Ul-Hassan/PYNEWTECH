@@ -1,0 +1,54 @@
+# backend\requirements.txt
+
+# Core backend stack
+sqlalchemy>=2.0,<3.0               # ORM for database models and SQL operations
+pyodbc>=5.0,<6.0                   # SQL Server DB driver (ODBC) for Python 
+fastapi>=0.100.0,<1.0.0            # Web framework for building APIs
+uvicorn>=0.20.0,<1.0.0             # ASGI server to run FastAPI apps
+
+# Authentication & security
+passlib>=1.3.0,<2.0.0              # Password hashing utilities
+pydantic>=1.10.0,<2.0.0            # Data validation and settings management
+email-validator>=1.1.0,<2.0.0      # Email format validation for pydantic models
+bcrypt>=3.1.0,<4.0.0               # Low-level password hashing used by passlib
+python-jose[cryptography]>=3.2.0,<3.3.0  # JWT encoding and decoding (security)
+
+# Database migration
+alembic>=1.11.0,<2.0.0             # Database migration tool for SQLAlchemy
+
+
+# File handling
+python-multipart>=0.0.6,<0.1       # For handling form-data/file uploads
+PyMuPDF>=1.24.1,<1.25              # For extracting text from PDFs
+python-docx>=1.1.0,<1.2            # For reading/writing .docx files and extract
+
+# Scheduling
+apscheduler>=3.9,<4.0              # Task scheduler
+tzlocal>=3.0                       # Required by apscheduler
+
+# Security & HTML sanitization
+bleach>=6.1.0,<7.0.0               # HTML sanitizer
+tinycss2>=1.2.1,<2.0               # Required for CSS sanitization with bleach
+
+# Email tools
+imap-tools>=1.0,<2.0               # IMAP email reading client
+
+# Optional utility packages (if needed)
+itsdangerous>=2.1,<3.0             # For secure tokens (e.g., password reset)
+
+# Cohere AI SDK for chat and generation
+cohere>=5.0.0,<6.0.0               # Official Python SDK for Cohere (supports Command R+ models)
+python-dotenv>=1.0,<2.0             # To load API keys from .env files
+aiohttp>=3.8,<4.0                   # For making asynchronous HTTP requests (e.g., to Cohere API)
+
+google-api-python-client>=2.120.0,<3.0     # Google Custom Search API client
+
+# HTML to PDF converter
+pdfkit==1.0.0  
+weasyprint>=58.0,<60.0
+
+# Qdrant vector database client
+qdrant-client>=1.8.0,<2.0.0
+
+# SendGrid official library for sending emails
+sendgrid>=6.11.0,<7.0.0
