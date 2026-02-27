@@ -52,3 +52,6 @@ qdrant-client>=1.8.0,<2.0.0
 
 # SendGrid official library for sending emails
 sendgrid>=6.11.0,<7.0.0
+
+#dotenv for environment variable management
+debugpy>=1.0,<2.0
