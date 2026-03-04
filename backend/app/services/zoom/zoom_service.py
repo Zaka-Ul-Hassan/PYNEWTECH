@@ -25,7 +25,7 @@ def _find_zoom_exe() -> str | None:
     return None
 
 
-# ── 1. YOUR ACCOUNT — Desktop App (GUI Automation) ────────────────────────────
+# 1. YOUR ACCOUNT — Desktop App (GUI Automation) 
 
 def join_meeting_gui(meeting_id: str, password: str = None):
     try:
@@ -86,7 +86,7 @@ def join_meeting_gui(meeting_id: str, password: str = None):
         return ResponseSchema(status=False, message=f"GUI join failed: {str(e)}", data=None)
 
 
-# ── 2. BOT — Browser Web Client (Selenium, joins as GUEST) ────────────────────
+#  2. BOT — Browser Web Client (Selenium, joins as GUEST) 
 
 def join_meeting_bot(
     meeting_id: str,
@@ -134,7 +134,7 @@ def join_meeting_bot(
 
         _bypass_interstitial(driver)
 
-        # ── Enter bot display name ──────────────────────────────────────────────
+        #  Enter bot display name 
         try:
             name_field = wait.until(
                 EC.presence_of_element_located(
@@ -149,11 +149,11 @@ def join_meeting_bot(
         except TimeoutException:
             pass
 
-        # ── Preview screen: mute mic AND camera BEFORE clicking Join ────────────
+        # ── Preview screen: mute mic AND camera BEFORE clicking Join 
         _ensure_preview_mic_muted(driver)
         _ensure_preview_camera_off(driver)
 
-        # ── Click Join button ───────────────────────────────────────────────────
+        #  Click Join button 
         try:
             join_btn = wait.until(
                 EC.element_to_be_clickable(
@@ -172,7 +172,7 @@ def join_meeting_bot(
                 data=None,
             )
 
-        # ── Confirm we are inside the meeting room ──────────────────────────────
+        #  Confirm we are inside the meeting room 
         try:
             wait.until(
                 EC.presence_of_element_located(
@@ -193,11 +193,6 @@ def join_meeting_bot(
 
         _dismiss_audio_dialog(driver)
 
-        # ── CRITICAL: wait, hover to reveal hidden toolbar, then mute/stop ──────
-        # Confirmed from DOM: footer has class "footer__hidden footer__hidable"
-        # The toolbar auto-hides — we must move the mouse over the meeting area
-        # to trigger it to appear, then JS-remove the hidden class as a safety net,
-        # before we can interact with mic/camera buttons.
         time.sleep(2)
         _reveal_toolbar(driver)
         time.sleep(1)
@@ -221,7 +216,7 @@ def join_meeting_bot(
         return ResponseSchema(status=False, message=f"Bot join failed: {str(e)}", data=None)
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
+# Helpers 
 
 def _wait_for_zoom_window(timeout: int = 20):
     for _ in range(timeout):
