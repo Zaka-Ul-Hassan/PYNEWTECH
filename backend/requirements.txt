@@ -55,3 +55,15 @@ sendgrid>=6.11.0,<7.0.0
 
 #dotenv for environment variable management
 debugpy>=1.0,<2.0
+
+# Data handling
+pandas>=1.5.0,<3.0.0
+# zoom bot dependencies
+
+# GUI automation: control screen, mouse, and send keystrokes
+pyautogui>=0.9.54,<1.0.0
+
+# Browser automation: automate web browsers
+selenium>=4.10.0,<5.0.0
+webdriver-manager>=4.0.0,<5.0.0
+
