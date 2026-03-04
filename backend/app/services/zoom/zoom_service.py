@@ -12,9 +12,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
+from selenium.webdriver.common.action_chains import ActionChains
 
 from app.schemas.response_schema import ResponseSchema
 from app.core.load_env import ZOOM_EXE_PATHS
+
 
 def _find_zoom_exe() -> str | None:
     for path in ZOOM_EXE_PATHS:
@@ -23,7 +25,8 @@ def _find_zoom_exe() -> str | None:
     return None
 
 
-# 1.YOUR ACCOUNT Desktop App (GUI Automation)
+# ── 1. YOUR ACCOUNT — Desktop App (GUI Automation) ────────────────────────────
+
 def join_meeting_gui(meeting_id: str, password: str = None):
     try:
         if not meeting_id:
@@ -31,11 +34,7 @@ def join_meeting_gui(meeting_id: str, password: str = None):
 
         zoom_exe = _find_zoom_exe()
         if not zoom_exe:
-            return ResponseSchema(
-                status=False,
-                message="Zoom.exe not found.",
-                data=None,
-            )
+            return ResponseSchema(status=False, message="Zoom.exe not found.", data=None)
 
         zoom_url = f"zoommtg://zoom.us/join?action=join&confno={meeting_id}"
         if password:
@@ -47,16 +46,12 @@ def join_meeting_gui(meeting_id: str, password: str = None):
         time.sleep(5)
         _focus_zoom_window()
 
-        # Press Enter to join
         pyautogui.press('enter')
         time.sleep(3)
-
-        # If audio popup appears
         pyautogui.press('enter')
 
-        # WAIT UNTIL FULLY INSIDE MEETING
         joined = False
-        for _ in range(20):  # wait max ~20 seconds
+        for _ in range(20):
             windows = gw.getWindowsWithTitle("Zoom")
             for w in windows:
                 if "Meeting" in w.title or meeting_id in w.title:
@@ -73,15 +68,12 @@ def join_meeting_gui(meeting_id: str, password: str = None):
                 data=None,
             )
 
-        # Now we are properly inside meeting
-        
         _focus_zoom_window()
         time.sleep(2)
 
-        # Turn OFF camera & mic AFTER joining
-        pyautogui.hotkey('alt', 'v')  # Video off
+        pyautogui.hotkey('alt', 'v')   # Video off
         time.sleep(0.5)
-        pyautogui.hotkey('alt', 'a')  # Mute
+        pyautogui.hotkey('alt', 'a')   # Mute mic
         time.sleep(0.5)
 
         return ResponseSchema(
@@ -94,50 +86,43 @@ def join_meeting_gui(meeting_id: str, password: str = None):
         return ResponseSchema(status=False, message=f"GUI join failed: {str(e)}", data=None)
 
 
+# ── 2. BOT — Browser Web Client (Selenium, joins as GUEST) ────────────────────
 
-# 2. BOT — Browser Web Client (Selenium, joins as GUEST — separate participant)
 def join_meeting_bot(
     meeting_id: str,
     password: str = None,
     bot_name: str = "Meeting Bot",
 ):
-
     driver = None
     try:
         if not meeting_id:
             return ResponseSchema(status=False, message="Meeting ID required", data=None)
 
-        #  Chrome options 
         options = webdriver.ChromeOptions()
 
-        # Block mic & camera at OS permission level (value 2 = block)
         prefs = {
             "profile.default_content_setting_values.media_stream_mic": 2,
             "profile.default_content_setting_values.media_stream_camera": 2,
             "profile.default_content_setting_values.notifications": 2,
-            # CRITICAL: stop Chrome from launching the zoommtg:// desktop app
             "protocol_handler.excluded_schemes.zoommtg": True,
             "protocol_handler.excluded_schemes.zoomus": True,
         }
         options.add_experimental_option("prefs", prefs)
 
-        options.add_argument("--use-fake-ui-for-media-stream")   # silently deny cam/mic
+        options.add_argument("--use-fake-ui-for-media-stream")
         options.add_argument("--disable-notifications")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--start-maximized")
-        options.add_argument("--disable-external-intent-requests")  # block app handoff
+        options.add_argument("--disable-external-intent-requests")
         options.add_argument("--disable-popup-blocking")
 
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
 
-        #  Launch browser 
         driver = webdriver.Chrome(options=options)
         wait = WebDriverWait(driver, 30)
 
-        #  Navigate to Zoom Web Client 
-        # noappdesktop=1 & browser=1 suppress the desktop app redirect
         zoom_url = (
             f"https://app.zoom.us/wc/join/{meeting_id}"
             f"?noappdesktop=1&browser=1"
@@ -147,10 +132,9 @@ def join_meeting_bot(
 
         driver.get(zoom_url)
 
-        # Handle "Launching Zoom…" interstitial if it appears 
         _bypass_interstitial(driver)
 
-        #  Enter bot display name 
+        # ── Enter bot display name ──────────────────────────────────────────────
         try:
             name_field = wait.until(
                 EC.presence_of_element_located(
@@ -163,9 +147,13 @@ def join_meeting_bot(
             name_field.clear()
             name_field.send_keys(bot_name)
         except TimeoutException:
-            pass  # Name screen skipped by meeting config
+            pass
 
-        #  Click Join button 
+        # ── Preview screen: mute mic AND camera BEFORE clicking Join ────────────
+        _ensure_preview_mic_muted(driver)
+        _ensure_preview_camera_off(driver)
+
+        # ── Click Join button ───────────────────────────────────────────────────
         try:
             join_btn = wait.until(
                 EC.element_to_be_clickable(
@@ -184,7 +172,7 @@ def join_meeting_bot(
                 data=None,
             )
 
-        #  Confirm we are inside the meeting room 
+        # ── Confirm we are inside the meeting room ──────────────────────────────
         try:
             wait.until(
                 EC.presence_of_element_located(
@@ -203,9 +191,19 @@ def join_meeting_bot(
                 data=None,
             )
 
-        #  Dismiss audio dialog & mute everything 
         _dismiss_audio_dialog(driver)
-        _click_mute_buttons(driver)
+
+        # ── CRITICAL: wait, hover to reveal hidden toolbar, then mute/stop ──────
+        # Confirmed from DOM: footer has class "footer__hidden footer__hidable"
+        # The toolbar auto-hides — we must move the mouse over the meeting area
+        # to trigger it to appear, then JS-remove the hidden class as a safety net,
+        # before we can interact with mic/camera buttons.
+        time.sleep(2)
+        _reveal_toolbar(driver)
+        time.sleep(1)
+
+        _ensure_muted(driver)
+        _ensure_video_off(driver)
 
         return ResponseSchema(
             status=True,
@@ -223,10 +221,9 @@ def join_meeting_bot(
         return ResponseSchema(status=False, message=f"Bot join failed: {str(e)}", data=None)
 
 
-#  Helpers 
+# ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _wait_for_zoom_window(timeout: int = 20):
-    """Poll until a Zoom window appears and bring it to the foreground."""
     for _ in range(timeout):
         windows = gw.getWindowsWithTitle("Zoom")
         if windows:
@@ -240,7 +237,6 @@ def _wait_for_zoom_window(timeout: int = 20):
 
 
 def _focus_zoom_window():
-    """Click the center of the Zoom window to ensure keyboard focus."""
     windows = gw.getWindowsWithTitle("Zoom")
     if windows:
         win = windows[0]
@@ -251,7 +247,6 @@ def _focus_zoom_window():
 
 
 def _bypass_interstitial(driver, timeout: int = 6):
-    """Click 'join from your browser' if the Zoom launching interstitial appears."""
     try:
         link = WebDriverWait(driver, timeout).until(
             EC.element_to_be_clickable(
@@ -268,7 +263,6 @@ def _bypass_interstitial(driver, timeout: int = 6):
 
 
 def _dismiss_audio_dialog(driver, timeout: int = 10):
-    """Click 'Join with Computer Audio' if the audio dialog appears."""
     try:
         btn = WebDriverWait(driver, timeout).until(
             EC.element_to_be_clickable(
@@ -283,18 +277,238 @@ def _dismiss_audio_dialog(driver, timeout: int = 10):
         pass
 
 
-def _click_mute_buttons(driver):
-    """Click mute-audio and stop-video buttons in the meeting toolbar."""
+def _safe_click(driver, btn):
+    """Try normal click first, fall back to JS click."""
+    try:
+        btn.click()
+    except Exception:
+        driver.execute_script("arguments[0].click();", btn)
+
+
+def _reveal_toolbar(driver):
+    """
+    The in-meeting footer has class 'footer__hidden' and auto-hides.
+    Two-step approach:
+      1. Move mouse to the centre-bottom of the page to trigger the hover reveal
+      2. JS removes 'footer__hidden' as a hard fallback so buttons become clickable
+    """
+    try:
+        # Step 1: hover over the meeting area to trigger the toolbar
+        actions = ActionChains(driver)
+        body = driver.find_element(By.TAG_NAME, "body")
+        actions.move_to_element(body).perform()
+        time.sleep(0.5)
+
+        # Move to bottom-centre where the toolbar lives
+        viewport_width = driver.execute_script("return window.innerWidth")
+        viewport_height = driver.execute_script("return window.innerHeight")
+        actions.move_by_offset(
+            viewport_width // 2 - body.size["width"] // 2,
+            viewport_height - 80
+        ).perform()
+        time.sleep(0.5)
+    except Exception:
+        pass
+
+    # Step 2: JS force-remove the hidden class so buttons are interactable
+    # Confirmed footer selectors from DOM screenshot:
+    #   id="wc-footer"  class contains "footer__hidden"
+    driver.execute_script("""
+        // Remove hidden class from the main footer
+        var footer = document.getElementById('wc-footer');
+        if (footer) {
+            footer.classList.remove('footer__hidden');
+            footer.style.display = '';
+            footer.style.visibility = 'visible';
+            footer.style.opacity = '1';
+        }
+
+        // Also target any element with footer__hidden class
+        var hiddenEls = document.querySelectorAll('.footer__hidden');
+        hiddenEls.forEach(function(el) {
+            el.classList.remove('footer__hidden');
+            el.style.visibility = 'visible';
+            el.style.opacity = '1';
+        });
+
+        // Ensure foot-bar is visible (confirmed id from DOM)
+        var footBar = document.getElementById('foot-bar');
+        if (footBar) {
+            footBar.style.display = '';
+            footBar.style.visibility = 'visible';
+            footBar.style.opacity = '1';
+        }
+    """)
+    time.sleep(0.5)
+
+
+def _ensure_preview_mic_muted(driver, timeout: int = 5):
+    """
+    Preview screen: mute mic BEFORE clicking Join.
+
+    Confirmed DOM:
+      <button id="preview-audio-control-button">
+        <span class="preview-video__control-text">Mute</span>   ← mic ON  → click
+        <span class="preview-video__control-text">Unmute</span> ← mic OFF → skip
+      </button>
+    """
     selectors = [
-        "button[aria-label*='Mute' i], button[class*='mute-audio']",
-        "button[aria-label*='Stop Video' i], button[class*='stop-video']",
+        "button#preview-audio-control-button",   # confirmed ID
+        "button[class*='preview-audio']",
+        "button[aria-label*='microphone' i]",
+        "button[aria-label*='mute' i]",
     ]
     for selector in selectors:
         try:
-            btn = WebDriverWait(driver, 5).until(
+            btn = WebDriverWait(driver, timeout).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
             )
-            btn.click()
+            label = (btn.get_attribute("aria-label") or "").lower()
+            if "unmute" in label:
+                return  # Already muted
+
+            try:
+                span = btn.find_element(
+                    By.CSS_SELECTOR,
+                    "span.preview-video__control-text, span[class*='control-text']"
+                )
+                if span.text.strip().lower() == "unmute":
+                    return  # Already muted
+            except NoSuchElementException:
+                pass
+
+            _safe_click(driver, btn)
             time.sleep(0.5)
+            return
+
         except (TimeoutException, NoSuchElementException):
-            pass
+            continue
+
+
+def _ensure_preview_camera_off(driver, timeout: int = 5):
+    """
+    Preview screen: turn camera OFF BEFORE clicking Join.
+
+    Confirmed DOM:
+      <button class="preview-video__control-button ...">
+        <span class="preview-video__control-text">Stop Video</span>  ← camera ON  → click
+        <span class="preview-video__control-text">Start Video</span> ← camera OFF → skip
+      </button>
+    """
+    selectors = [
+        "button[class*='preview-video__control-button']",   # confirmed class
+        "button[aria-label*='stop my video' i]",
+        "button[aria-label*='stop video' i]",
+        "button[aria-label*='start my video' i]",
+        "button[class*='preview-video']",
+        "button[class*='video-preview']",
+    ]
+    for selector in selectors:
+        try:
+            btn = WebDriverWait(driver, timeout).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
+            )
+            label = (btn.get_attribute("aria-label") or "").lower()
+            if "start" in label or "turn on" in label or "enable" in label:
+                return  # Already off
+
+            try:
+                span = btn.find_element(
+                    By.CSS_SELECTOR,
+                    "span.preview-video__control-text, span[class*='control-text']"
+                )
+                if "start" in span.text.strip().lower():
+                    return  # Already off
+            except NoSuchElementException:
+                pass
+
+            _safe_click(driver, btn)
+            time.sleep(0.5)
+            return
+
+        except (TimeoutException, NoSuchElementException):
+            continue
+
+
+def _ensure_muted(driver, timeout: int = 8):
+    """
+    In-meeting: mute mic ONLY if currently active.
+
+    Confirmed DOM:
+      class="... join-audio-container__btn"
+      aria-label="mute my microphone"   ← mic ON  → click
+      aria-label="unmute my microphone" ← mic OFF → skip
+    """
+    selectors = [
+        "button.join-audio-container__btn[aria-label='mute my microphone']",
+        "button.join-audio-container__btn[aria-label='unmute my microphone']",
+        "button[aria-label='mute my microphone']",
+        "button[aria-label='unmute my microphone']",
+        "button[aria-label*='microphone' i]",
+        "button[aria-label*='Mute' i]:not([aria-label*='Unmute' i])",
+        "button[aria-label*='Unmute' i]",
+        "button.join-audio-container__btn",
+        "button[class*='mute-audio']",
+    ]
+    for selector in selectors:
+        try:
+            # Use presence_of_element_located here because toolbar is already
+            # force-revealed by _reveal_toolbar — we just need to find + JS-click
+            btn = WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+            )
+            label = (btn.get_attribute("aria-label") or "").lower()
+            if not label:
+                continue
+            if "unmute" in label:
+                return  # Already muted
+
+            # Use JS click — bypasses any remaining visibility/interactability issues
+            driver.execute_script("arguments[0].click();", btn)
+            time.sleep(0.5)
+            return
+
+        except (TimeoutException, NoSuchElementException):
+            continue
+
+
+def _ensure_video_off(driver, timeout: int = 8):
+    """
+    In-meeting: stop camera ONLY if currently active.
+
+    Confirmed DOM:
+      class="... send-video-container__btn"
+      aria-label="stop my video"  ← camera ON  → click
+      aria-label="start my video" ← camera OFF → skip
+    """
+    selectors = [
+        "button.send-video-container__btn[aria-label='stop my video']",
+        "button.send-video-container__btn[aria-label='start my video']",
+        "button[aria-label='stop my video']",
+        "button[aria-label='start my video']",
+        "button[aria-label*='stop my video' i]",
+        "button[aria-label*='start my video' i]",
+        "button[aria-label*='Stop Video' i]",
+        "button[aria-label*='Start Video' i]",
+        "button.send-video-container__btn",
+        "button[aria-label*='video' i]",
+        "button[class*='stop-video']",
+    ]
+    for selector in selectors:
+        try:
+            btn = WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+            )
+            label = (btn.get_attribute("aria-label") or "").lower()
+            if not label:
+                continue
+            if "start" in label or "turn on" in label:
+                return  # Camera already OFF
+
+            # Use JS click — bypasses visibility/interactability issues
+            driver.execute_script("arguments[0].click();", btn)
+            time.sleep(0.5)
+            return
+
+        except (TimeoutException, NoSuchElementException):
+            continue
