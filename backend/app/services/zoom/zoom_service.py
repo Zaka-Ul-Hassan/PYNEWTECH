@@ -24,7 +24,6 @@ def _find_zoom_exe() -> str | None:
 
 
 # 1.YOUR ACCOUNT Desktop App (GUI Automation)
-
 def join_meeting_gui(meeting_id: str, password: str = None):
     try:
         if not meeting_id:
@@ -34,7 +33,7 @@ def join_meeting_gui(meeting_id: str, password: str = None):
         if not zoom_exe:
             return ResponseSchema(
                 status=False,
-                message="Zoom.exe not found. Add your path to ZOOM_EXE_PATHS in zoom_service.py.",
+                message="Zoom.exe not found.",
                 data=None,
             )
 
@@ -45,22 +44,49 @@ def join_meeting_gui(meeting_id: str, password: str = None):
         subprocess.Popen([zoom_exe, f"--url={zoom_url}"])
 
         _wait_for_zoom_window(timeout=20)
-        time.sleep(4)
+        time.sleep(5)
         _focus_zoom_window()
 
-        pyautogui.hotkey('alt', 'v')
-        time.sleep(0.8)
-        pyautogui.hotkey('alt', 'a')
-        time.sleep(0.8)
-
+        # Press Enter to join
         pyautogui.press('enter')
-        time.sleep(4)
-        pyautogui.press('enter') 
-        time.sleep(1)
+        time.sleep(3)
+
+        # If audio popup appears
+        pyautogui.press('enter')
+
+        # WAIT UNTIL FULLY INSIDE MEETING
+        joined = False
+        for _ in range(20):  # wait max ~20 seconds
+            windows = gw.getWindowsWithTitle("Zoom")
+            for w in windows:
+                if "Meeting" in w.title or meeting_id in w.title:
+                    joined = True
+                    break
+            if joined:
+                break
+            time.sleep(1)
+
+        if not joined:
+            return ResponseSchema(
+                status=False,
+                message="Could not confirm meeting join.",
+                data=None,
+            )
+
+        # Now we are properly inside meeting
+        
+        _focus_zoom_window()
+        time.sleep(2)
+
+        # Turn OFF camera & mic AFTER joining
+        pyautogui.hotkey('alt', 'v')  # Video off
+        time.sleep(0.5)
+        pyautogui.hotkey('alt', 'a')  # Mute
+        time.sleep(0.5)
 
         return ResponseSchema(
             status=True,
-            message=f"Your account joined meeting {meeting_id} (camera off, mic off).",
+            message=f"Meeting {meeting_id} joined. Mic and camera turned OFF.",
             data={"meeting_id": meeting_id},
         )
 
@@ -238,7 +264,7 @@ def _bypass_interstitial(driver, timeout: int = 6):
         link.click()
         time.sleep(1)
     except TimeoutException:
-        pass  # No interstitial — already on web client
+        pass
 
 
 def _dismiss_audio_dialog(driver, timeout: int = 10):
