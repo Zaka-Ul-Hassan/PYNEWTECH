@@ -12,3 +12,14 @@ LINKEDIN_REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI")
 LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 LINKEDIN_SCOPES = os.getenv("LINKEDIN_SCOPES")
+
+# Zoom Developer App Credentials
+ZM_RTMS_CLIENT=os.getenv("ZM_RTMS_CLIENT")
+ZM_RTMS_SECRET=os.getenv("ZM_RTMS_SECRET")
+
+# Load Zoom paths from environment
+ZOOM_EXE_PATHS = [
+    os.path.expandvars(os.getenv("ZOOM_PATH_1", "")),
+    os.path.expandvars(os.getenv("ZOOM_PATH_2", "")),
+    os.path.expandvars(os.getenv("ZOOM_PATH_3", ""))
+]
