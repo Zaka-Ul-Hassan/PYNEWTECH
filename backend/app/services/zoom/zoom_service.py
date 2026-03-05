@@ -24,6 +24,7 @@ from app.utils.zoom_helper import (
     _ensure_muted,
     _ensure_video_off,
 )
+from app.core.load_env import ZOOM_DESKTOP_BASE_URL, ZOOM_WEB_BASE_URL
 
 
 # 1. YOUR ACCOUNT — Desktop App (GUI Automation)
@@ -36,7 +37,7 @@ def join_meeting_gui(meeting_id: str, password: str = None):
         if not zoom_exe:
             return ResponseSchema(status=False, message="Zoom.exe not found.", data=None)
 
-        zoom_url = f"zoommtg://zoom.us/join?action=join&confno={meeting_id}"
+        zoom_url = f"{ZOOM_DESKTOP_BASE_URL}{meeting_id}"
         if password:
             zoom_url += f"&pwd={urllib.parse.quote(password)}"
 
@@ -117,7 +118,7 @@ def join_meeting_bot(
         driver = webdriver.Chrome(options=options)
         wait = WebDriverWait(driver, 30)
 
-        zoom_url = f"https://app.zoom.us/wc/join/{meeting_id}?noappdesktop=1&browser=1"
+        zoom_url = f"{ZOOM_WEB_BASE_URL}{meeting_id}?noappdesktop=1&browser=1"
         if password:
             zoom_url += f"&pwd={urllib.parse.quote(password)}"
 

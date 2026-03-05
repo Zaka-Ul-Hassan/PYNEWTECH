@@ -23,3 +23,7 @@ ZOOM_EXE_PATHS = [
     os.path.expandvars(os.getenv("ZOOM_PATH_2", "")),
     os.path.expandvars(os.getenv("ZOOM_PATH_3", ""))
 ]
+
+# Zoom URL
+ZOOM_DESKTOP_BASE_URL = os.getenv("ZOOM_DESKTOP_BASE_URL")
+ZOOM_WEB_BASE_URL = os.getenv("ZOOM_WEB_BASE_URL")
