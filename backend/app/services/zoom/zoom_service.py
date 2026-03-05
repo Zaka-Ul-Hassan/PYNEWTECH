@@ -23,8 +23,6 @@ from app.utils.zoom_helper import (
     _dismiss_audio_dialog,
     _ensure_muted,
     _ensure_video_off,
-    _gui_force_mute,
-    _gui_force_video_off,
 )
 
 
@@ -47,12 +45,11 @@ def join_meeting_gui(meeting_id: str, password: str = None):
         time.sleep(5)
         _focus_zoom_window()
 
-        # Dismiss join/password prompts
         pyautogui.press('enter')
         time.sleep(3)
         pyautogui.press('enter')
 
-        # Wait for meeting window to appear
+        # Wait until we are inside the meeting window
         joined = False
         for _ in range(20):
             for w in gw.getWindowsWithTitle("Zoom"):
@@ -66,21 +63,17 @@ def join_meeting_gui(meeting_id: str, password: str = None):
         if not joined:
             return ResponseSchema(status=False, message="Could not confirm meeting join.", data=None)
 
-        # Wait for toolbar to fully render before touching mic/camera
-        time.sleep(5)
+        # Wait for toolbar to render, then focus
+        time.sleep(4)
         _focus_zoom_window()
+        time.sleep(1)
 
-        # State-aware: only press hotkey if currently in wrong state
-        # _gui_force_mute checks current icon before pressing alt+a
-        # _gui_force_video_off checks current icon before pressing alt+v
-        _gui_force_video_off()
-        _gui_force_mute()
-
-        # Second pass after short delay — catches any Zoom re-enable on entry
-        time.sleep(2)
-        _focus_zoom_window()
-        _gui_force_video_off()
-        _gui_force_mute()
+        # Press each hotkey ONCE — GUI joins with camera+mic ON by default
+        # alt+v = toggle video, alt+a = toggle audio — one press = OFF
+        pyautogui.hotkey('alt', 'v')
+        time.sleep(0.5)
+        pyautogui.hotkey('alt', 'a')
+        time.sleep(0.5)
 
         return ResponseSchema(
             status=True,
@@ -131,7 +124,6 @@ def join_meeting_bot(
         driver.get(zoom_url)
         _bypass_interstitial(driver)
 
-        # Enter bot name
         try:
             name_field = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,
                 "input#input-for-name, input[placeholder*='name' i]")))
@@ -140,11 +132,10 @@ def join_meeting_bot(
         except TimeoutException:
             pass
 
-        # Mute mic and camera on preview screen BEFORE joining
+        # Mute + camera off on preview BEFORE joining
         _ensure_preview_mic_muted(driver)
         _ensure_preview_camera_off(driver)
 
-        # Click Join
         try:
             join_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,
                 "button.preview-join-button, button[class*='join-btn'], button#joinBtn, button[class*='join']")))
@@ -152,24 +143,19 @@ def join_meeting_bot(
         except TimeoutException:
             return ResponseSchema(status=False, message="Could not find Join button.", data=None)
 
-        # Confirm we entered the meeting
         try:
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,
-                "div.meeting-info-container, div[class*='meeting-client'], div#wc-container-right, div[class*='main-layout']")))
+                "div.meeting-info-container, div[class*='meeting-client'], "
+                "div#wc-container-right, div[class*='main-layout']")))
         except TimeoutException:
             return ResponseSchema(status=False, message="Could not confirm meeting entry. Host approval may be required.", data=None)
 
         _dismiss_audio_dialog(driver)
 
-        # Wait for Zoom to finish initialising toolbar
+        # Wait for toolbar to fully render
         time.sleep(4)
 
-        # Mute + video off — state-aware (only clicks if currently wrong state)
-        _ensure_muted(driver)
-        _ensure_video_off(driver)
-
-        # Second pass — catches any delayed re-enable by Zoom
-        time.sleep(3)
+        # Single pass — state-aware, JS click, no double-toggle risk
         _ensure_muted(driver)
         _ensure_video_off(driver)
 

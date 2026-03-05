@@ -40,35 +40,6 @@ def _focus_zoom_window():
         time.sleep(0.5)
 
 
-# ── GUI: state-aware toggle — only press hotkey if currently in wrong state ──
-
-def _gui_force_mute():
-    # Zoom toolbar button title is "Mute" when mic is ON, "Unmute" when already muted
-    # We use pyautogui to scan for the unmute icon; if not found, mic is ON → press hotkey
-    muted = False
-    try:
-        muted = pyautogui.locateOnScreen("assets/zoom_unmute_icon.png", confidence=0.8) is not None
-    except Exception:
-        pass
-    if not muted:
-        pyautogui.hotkey('alt', 'a')
-        time.sleep(0.6)
-
-
-def _gui_force_video_off():
-    # Same logic: look for "Start Video" icon (means video is already OFF)
-    video_off = False
-    try:
-        video_off = pyautogui.locateOnScreen("assets/zoom_start_video_icon.png", confidence=0.8) is not None
-    except Exception:
-        pass
-    if not video_off:
-        pyautogui.hotkey('alt', 'v')
-        time.sleep(0.6)
-
-
-# ── Selenium shared helpers ──
-
 def _bypass_interstitial(driver, timeout: int = 6):
     try:
         link = WebDriverWait(driver, timeout).until(
@@ -95,24 +66,21 @@ def _dismiss_audio_dialog(driver, timeout: int = 10):
 
 
 def _reveal_toolbar(driver):
-    # move_to_element is absolute (not cumulative like move_by_offset) — targets footer directly
+    # Target footer element directly — absolute position, not cumulative offset
     try:
         footer = driver.find_element(By.ID, "wc-footer")
         ActionChains(driver).move_to_element(footer).perform()
         time.sleep(0.4)
     except Exception:
         pass
-    # Force-show footer regardless of hover success
     driver.execute_script("""
-        ['wc-footer','foot-bar'].forEach(function(id) {
+        ['wc-footer', 'foot-bar'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) { el.classList.remove('footer__hidden'); el.style.visibility='visible'; el.style.opacity='1'; el.style.display='flex'; }
         });
     """)
     time.sleep(0.3)
 
-
-# ── Bot preview helpers (before clicking Join) ──
 
 def _ensure_preview_mic_muted(driver, timeout: int = 5):
     for sel in ["button#preview-audio-control-button", "button[class*='preview-audio']", "button[aria-label*='microphone' i]"]:
@@ -152,11 +120,9 @@ def _ensure_preview_camera_off(driver, timeout: int = 5):
             continue
 
 
-# ── Bot in-meeting helpers (after joining) ──
-
 def _ensure_muted(driver, timeout: int = 8):
-    # aria-label "mute my microphone" = mic ON → click
-    # aria-label "unmute my microphone" = already muted → skip
+    # "mute my microphone" = mic ON → click to mute
+    # "unmute my microphone" = already muted → skip
     _reveal_toolbar(driver)
     for sel in [
         "button.join-audio-container__btn[aria-label='mute my microphone']",
@@ -179,8 +145,8 @@ def _ensure_muted(driver, timeout: int = 8):
 
 
 def _ensure_video_off(driver, timeout: int = 8):
-    # From DOM: button.send-video-container__btn aria-label="stop my video" = camera ON → click
-    #           button.send-video-container__btn aria-label="start my video" = camera OFF → skip
+    # "stop my video" = camera ON → click to stop
+    # "start my video" = camera OFF → skip
     _reveal_toolbar(driver)
     for sel in [
         "button.send-video-container__btn[aria-label='stop my video']",
@@ -195,7 +161,6 @@ def _ensure_video_off(driver, timeout: int = 8):
                 continue
             if "start" in label or "turn on" in label:
                 return  # already off
-            # Camera is on — use JS click to bypass any stale pointer position
             driver.execute_script("arguments[0].click();", btn)
             time.sleep(0.6)
             return
