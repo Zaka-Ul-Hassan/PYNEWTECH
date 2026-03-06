@@ -1,4 +1,3 @@
-/* frontend\css\zoom_transcript.css */
 /* ── RESET & BASE ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -224,7 +223,7 @@ html, body {
 /* ── BUTTONS ── */
 .btn-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 1px;
   background: var(--border);
 }
@@ -257,12 +256,14 @@ html, body {
 .btn-me::before   { background: var(--purple); }
 .btn-bot::before  { background: var(--orange); }
 .btn-live::before { background: var(--green); }
+.btn-full::before { background: var(--yellow); }
 
 .action-btn:hover { background: var(--bg3); }
 
 .btn-me:hover   { box-shadow: inset 0 0 30px rgba(153,69,255,0.05); }
 .btn-bot:hover  { box-shadow: inset 0 0 30px rgba(255,140,0,0.05); }
 .btn-live:hover { box-shadow: inset 0 0 30px rgba(0,255,136,0.05); }
+.btn-full:hover { box-shadow: inset 0 0 30px rgba(255,215,0,0.05); }
 
 .btn-icon {
   font-size: 22px;
@@ -274,6 +275,7 @@ html, body {
 .btn-me .btn-icon   { color: var(--purple); }
 .btn-bot .btn-icon  { color: var(--orange); }
 .btn-live .btn-icon { color: var(--green); }
+.btn-full .btn-icon { color: var(--yellow); }
 
 .btn-content {
   display: flex;
@@ -328,6 +330,27 @@ html, body {
   background: rgba(0,255,136,0.04);
 }
 .btn-live.running .btn-title { color: var(--green); }
+
+/* active/running state for full transcript btn */
+.btn-full.running {
+  background: rgba(255,215,0,0.04);
+}
+.btn-full.running .btn-title { color: var(--yellow); }
+
+.btn-badge-full {
+  position: absolute;
+  top: 10px; right: 12px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+  padding: 2px 7px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-badge-full.visible { opacity: 1; animation: blink-badge 1.2s steps(1) infinite; }
 
 /* ── SEGMENT BAR ── */
 .segment-bar {
@@ -569,6 +592,9 @@ html, body {
 .export-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .btn-row { grid-template-columns: 1fr 1fr; }
+}
 @media (max-width: 700px) {
   .config-grid     { grid-template-columns: 1fr; }
   .field-group.full-width { grid-column: 1; }
