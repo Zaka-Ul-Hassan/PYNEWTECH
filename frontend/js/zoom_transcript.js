@@ -1,5 +1,3 @@
-// frontend\js\zoom_transcript.js
-
 // ── Zoom Bot Console — zoom_transcript.js ──
 
 // ── State ──
@@ -351,4 +349,109 @@ function exportTranscript() {
 function clearLog() {
   document.getElementById('logContainer').innerHTML = '';
   log('Log cleared.', 'info');
+}
+
+// ── Button: Get Full Transcript (POST /zoom/bot/transcript) ──
+async function getFullTranscript() {
+  const cfg = getConfig();
+  if (!cfg.meetingId) { log('Meeting ID is required.', 'warn'); return; }
+
+  const btn = document.getElementById('btnFull');
+  btn.disabled = true;
+  btn.classList.add('running');
+  document.getElementById('fullBtnTitle').textContent = 'RECORDING…';
+  document.getElementById('fullBadge').classList.add('visible');
+  document.getElementById('emptyState') && (document.getElementById('emptyState').style.display = 'none');
+
+  setStatus('busy', 'Recording…');
+  log(`Bot joining meeting ${cfg.meetingId} — will collect transcript for ${cfg.duration}s then return…`, 'info');
+  log(`⚠ This blocks until the session ends (${cfg.duration}s). Use Live Transcript for real-time.`, 'warn');
+
+  try {
+    const payload = {
+      meeting_id:       cfg.meetingId,
+      bot_name:         cfg.botName,
+      duration_seconds: cfg.duration,
+    };
+    if (cfg.password) payload.password = cfg.password;
+
+    const res  = await fetch(`${cfg.apiBase}/zoom/bot/transcript`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (data.status && data.data?.transcript?.length) {
+      const lines = data.data.transcript;  // [{timestamp, text}, ...]
+      renderFullTranscriptSegments(lines);
+      setStatus('idle', 'IDLE');
+      log(`✓ Full transcript received — ${lines.length} lines.`, 'success');
+    } else if (data.status && data.data?.transcript?.length === 0) {
+      setStatus('idle', 'IDLE');
+      log('Session ended but no transcript lines were captured. Ensure host enabled captions.', 'warn');
+    } else {
+      setStatus('error', 'Failed');
+      log(`✗ ${data.message}`, 'error');
+    }
+  } catch (err) {
+    setStatus('error', 'Error');
+    log(`Network error: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('running');
+    document.getElementById('fullBtnTitle').textContent = 'GET TRANSCRIPT';
+    document.getElementById('fullBadge').classList.remove('visible');
+  }
+}
+
+// Render full transcript lines into 60-second segments
+function renderFullTranscriptSegments(lines) {
+  if (!lines.length) return;
+
+  const container = document.getElementById('segmentsContainer');
+
+  // Group lines into buckets of SEGMENT_SEC seconds by timestamp
+  const buckets = [];
+  let bucket    = [];
+  let bucketStart = lines[0]?.timestamp || '00:00:00';
+
+  lines.forEach((line, i) => {
+    bucket.push(line);
+    // Every SEGMENT_SEC lines (approximate) or last line → flush bucket
+    if (bucket.length >= SEGMENT_SEC || i === lines.length - 1) {
+      buckets.push({ start: bucketStart, end: line.timestamp, lines: [...bucket] });
+      bucket      = [];
+      bucketStart = lines[i + 1]?.timestamp || line.timestamp;
+    }
+  });
+
+  buckets.forEach(b => {
+    segmentIndex++;
+    totalLines += b.lines.length;
+
+    const card = document.createElement('div');
+    card.className = 'segment-card';
+    card.id        = `seg-${segmentIndex}`;
+    card.innerHTML = `
+      <div class="segment-card-header">
+        <span class="seg-num">SEGMENT ${String(segmentIndex).padStart(3, '0')}</span>
+        <span class="seg-time">${b.start} → ${b.end}</span>
+        <span class="seg-count">${b.lines.length} line${b.lines.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="segment-card-body">
+        ${b.lines.map(l => `
+          <div class="caption-line">
+            <span class="caption-ts">${l.timestamp}</span>
+            <span class="caption-text">${escapeHtml(l.text)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  container.scrollTop = container.scrollHeight;
+  updateTranscriptMeta();
+  log(`Rendered ${buckets.length} segment(s) from full transcript.`, 'success');
 }
