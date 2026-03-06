@@ -1,0 +1,144 @@
+<!-- frontend\html\zoom_transcript.html -->
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zoom Bot Console</title>
+  <link rel="stylesheet" href="../css/zoom_transcript.css" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <div class="console-wrapper">
+
+    <!-- HEADER -->
+    <header class="console-header">
+      <div class="header-left">
+        <span class="logo-dot"></span>
+        <span class="logo-text">ZOOM<span class="accent">BOT</span></span>
+        <span class="version-tag">v2.0</span>
+      </div>
+      <div class="status-bar">
+        <span class="status-indicator" id="statusDot"></span>
+        <span class="status-text" id="statusText">IDLE</span>
+      </div>
+    </header>
+
+    <!-- CONFIG PANEL -->
+    <section class="config-panel">
+      <div class="panel-label">⬡ CONFIGURATION</div>
+      <div class="config-grid">
+        <div class="field-group full-width">
+          <label class="field-label">API BASE URL</label>
+          <input class="field-input" type="text" id="apiBase" value="http://127.0.0.1:8000" placeholder="http://127.0.0.1:8000"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">MEETING ID</label>
+          <input class="field-input" type="text" id="meetingId" placeholder="123 456 7890"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">PASSWORD <span class="optional">(optional)</span></label>
+          <input class="field-input" type="password" id="meetingPassword" placeholder="••••••••"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">BOT DISPLAY NAME</label>
+          <input class="field-input" type="text" id="botName" value="Transcript Bot" placeholder="Transcript Bot"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">SESSION DURATION (seconds)</label>
+          <input class="field-input" type="number" id="duration" value="3600" min="60" max="86400"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTION BUTTONS -->
+    <section class="actions-panel">
+      <div class="panel-label">◈ ACTIONS</div>
+      <div class="btn-row">
+
+        <button class="action-btn btn-me" id="btnJoinMe" onclick="joinAsMe()">
+          <span class="btn-icon">⬡</span>
+          <span class="btn-content">
+            <span class="btn-title">JOIN AS ME</span>
+            <span class="btn-sub">Desktop App · GUI Automation</span>
+          </span>
+        </button>
+
+        <button class="action-btn btn-bot" id="btnJoinBot" onclick="joinAsBot()">
+          <span class="btn-icon">◈</span>
+          <span class="btn-content">
+            <span class="btn-title">JOIN AS BOT</span>
+            <span class="btn-sub">Browser Guest · Selenium</span>
+          </span>
+        </button>
+
+        <button class="action-btn btn-live" id="btnLive" onclick="toggleLiveTranscript()">
+          <span class="btn-icon">◉</span>
+          <span class="btn-content">
+            <span class="btn-title" id="liveBtnTitle">LIVE TRANSCRIPT</span>
+            <span class="btn-sub">SSE Stream · Real-time Captions</span>
+          </span>
+          <span class="btn-badge" id="liveBadge">LIVE</span>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- SEGMENT TIMER (shown during live) -->
+    <div class="segment-bar hidden" id="segmentBar">
+      <span class="segment-label">NEXT SEGMENT IN</span>
+      <span class="segment-countdown" id="segmentCountdown">60</span>
+      <span class="segment-label">sec</span>
+      <div class="segment-progress-track">
+        <div class="segment-progress-fill" id="segmentFill"></div>
+      </div>
+    </div>
+
+    <!-- LIVE CAPTIONS TICKER -->
+    <div class="live-ticker hidden" id="liveTicker">
+      <span class="ticker-label">▶ LIVE</span>
+      <span class="ticker-text" id="tickerText">Connecting to caption stream...</span>
+    </div>
+
+    <!-- TRANSCRIPT SEGMENTS -->
+    <section class="transcript-panel" id="transcriptPanel">
+      <div class="panel-label">
+        ◌ TRANSCRIPT
+        <span class="transcript-meta" id="transcriptMeta">0 segments · 0 lines</span>
+        <div class="panel-actions">
+          <button class="clear-btn" onclick="clearTranscript()">CLEAR</button>
+          <button class="export-btn" onclick="exportTranscript()">EXPORT .TXT</button>
+        </div>
+      </div>
+      <div class="segments-container" id="segmentsContainer">
+        <div class="empty-state" id="emptyState">
+          <span class="empty-icon">◌</span>
+          <span>No transcript yet. Start a live session above.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOG CONSOLE -->
+    <section class="log-panel">
+      <div class="panel-label">
+        ▸ SYSTEM LOG
+        <button class="clear-btn" onclick="clearLog()">CLEAR</button>
+      </div>
+      <div class="log-container" id="logContainer">
+        <div class="log-entry log-info">
+          <span class="log-time">--:--:--</span>
+          <span class="log-msg">Zoom Bot Console initialized. Configure settings and choose an action.</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="../js/zoom_transcript.js"></script>
+</body>
+</html>
