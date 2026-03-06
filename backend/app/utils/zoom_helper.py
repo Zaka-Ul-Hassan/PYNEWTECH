@@ -66,7 +66,7 @@ def _dismiss_audio_dialog(driver, timeout: int = 10):
 
 
 def _reveal_toolbar(driver):
-    # Target footer element directly — absolute position, not cumulative offset
+    # Target footer directly — absolute, not cumulative offset
     try:
         footer = driver.find_element(By.ID, "wc-footer")
         ActionChains(driver).move_to_element(footer).perform()
@@ -93,7 +93,7 @@ def _ensure_preview_mic_muted(driver, timeout: int = 5):
             except NoSuchElementException:
                 pass
             if "unmute" in label or span_text == "unmute":
-                return  # already muted
+                return
             btn.click()
             time.sleep(0.8)
             return
@@ -112,7 +112,7 @@ def _ensure_preview_camera_off(driver, timeout: int = 5):
             except NoSuchElementException:
                 pass
             if "start" in label or "start" in span_text:
-                return  # already off
+                return
             btn.click()
             time.sleep(0.8)
             return
@@ -121,8 +121,7 @@ def _ensure_preview_camera_off(driver, timeout: int = 5):
 
 
 def _ensure_muted(driver, timeout: int = 8):
-    # "mute my microphone" = mic ON → click to mute
-    # "unmute my microphone" = already muted → skip
+    # "mute my microphone" = mic ON → click | "unmute my microphone" = already muted → skip
     _reveal_toolbar(driver)
     for sel in [
         "button.join-audio-container__btn[aria-label='mute my microphone']",
@@ -136,7 +135,7 @@ def _ensure_muted(driver, timeout: int = 8):
             if not label:
                 continue
             if "unmute" in label:
-                return  # already muted
+                return
             driver.execute_script("arguments[0].click();", btn)
             time.sleep(0.6)
             return
@@ -145,8 +144,7 @@ def _ensure_muted(driver, timeout: int = 8):
 
 
 def _ensure_video_off(driver, timeout: int = 8):
-    # "stop my video" = camera ON → click to stop
-    # "start my video" = camera OFF → skip
+    # "stop my video" = camera ON → click | "start my video" = already off → skip
     _reveal_toolbar(driver)
     for sel in [
         "button.send-video-container__btn[aria-label='stop my video']",
@@ -160,9 +158,76 @@ def _ensure_video_off(driver, timeout: int = 8):
             if not label:
                 continue
             if "start" in label or "turn on" in label:
-                return  # already off
+                return
             driver.execute_script("arguments[0].click();", btn)
             time.sleep(0.6)
             return
         except (TimeoutException, NoSuchElementException):
             continue
+
+
+# ── Live Transcript helpers ──
+
+def _enable_live_transcript(driver, timeout: int = 15):
+    _reveal_toolbar(driver)
+
+    # "Hide captions" = already ON → skip click, return True
+    # "Show captions" = OFF → click to enable
+    for sel in [
+        "button[aria-label='Hide captions']",
+        "button[aria-label='Show captions']",
+        "button[aria-label*='caption' i]",
+        "button[aria-label*='CC' i]",
+    ]:
+        try:
+            btn = WebDriverWait(driver, timeout).until(EC.presence_of_element_located((By.CSS_SELECTOR, sel)))
+            label = (btn.get_attribute("aria-label") or "").lower()
+            if "hide" in label:
+                return True  # captions already on
+            driver.execute_script("arguments[0].click();", btn)
+            time.sleep(1.5)
+            return True
+        except (TimeoutException, NoSuchElementException):
+            continue
+    return False
+
+
+def _scrape_transcript_lines(driver) -> list[str]:
+    # Confirmed from DOM: span.live-transcription-subtitle__item holds the caption text
+    lines = []
+    for sel in [
+        "span.live-transcription-subtitle__item",
+        "div#live-transcription-subtitle",
+        "div.live-transcription-subtitle__box",
+    ]:
+        try:
+            elements = driver.find_elements(By.CSS_SELECTOR, sel)
+            for el in elements:
+                text = el.text.strip()
+                if text:
+                    lines.append(text)
+            if lines:
+                break
+        except Exception:
+            continue
+    return lines
+
+
+def collect_transcript(driver, duration_seconds: int = 300, poll_interval: int = 2) -> list[dict]:
+    # Poll caption DOM for `duration_seconds`, deduplicate, return timestamped lines
+    seen = set()
+    transcript = []
+    deadline = time.time() + duration_seconds
+
+    while time.time() < deadline:
+        lines = _scrape_transcript_lines(driver)
+        for line in lines:
+            if line not in seen:
+                seen.add(line)
+                transcript.append({
+                    "timestamp": time.strftime("%H:%M:%S"),
+                    "text": line,
+                })
+        time.sleep(poll_interval)
+
+    return transcript
