@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 import smtplib
 
 from app.core.load_env import SMTP_EMAIL, SMTP_PASSWORD, SMTP_SERVER, SMTP_PORT
-from app.schemas.email.email_schema import SendSystemEmailSchema
+from app.schemas.email.email_schema import EmailResponseData, SendSystemEmailSchema
 from app.schemas.response_schema import ResponseSchema
 
 
@@ -24,10 +24,16 @@ def send_system_email(payload: SendSystemEmailSchema) -> ResponseSchema:
         server.sendmail(SMTP_EMAIL, payload.recipient, message.as_string())
         server.quit()
 
+        response_data = EmailResponseData(
+            recipient=payload.recipient,
+            subject=payload.subject,
+            body=payload.body
+        )
+
         return ResponseSchema(
             status=True,
             message="System email sent successfully",
-            data={"recipient": payload.recipient, "subject": payload.subject, "body": payload.body},
+            data=response_data,
         )
 
     except Exception as ex:
