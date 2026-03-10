@@ -8,6 +8,8 @@ import uvicorn
 from app.schemas.response_schema import ResponseSchema
 from app.routes.linkedin import linkedin_auth_route
 from app.routes.zoom import zoom_route
+from app.routes.email import email_route
+from app.routes.ai import ai_route
 
 
 app = FastAPI()
@@ -34,6 +36,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 app.include_router(linkedin_auth_route.router,prefix="/auth/linkedin",tags=["LinkedIn Auth"])
 app.include_router(zoom_route.router,prefix="/zoom",tags=["Zoom"])
+app.include_router(email_route.router,prefix="/email",tags=["Email"])
+app.include_router(ai_route.router,prefix="/ai",tags=["AI"])
 
 
 

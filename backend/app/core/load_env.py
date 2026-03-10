@@ -27,3 +27,13 @@ ZOOM_EXE_PATHS = [
 # Zoom URL
 ZOOM_DESKTOP_BASE_URL = os.getenv("ZOOM_DESKTOP_BASE_URL")
 ZOOM_WEB_BASE_URL = os.getenv("ZOOM_WEB_BASE_URL")
+
+# Gmail SMTP Configuration
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+# Groq API Configuration
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL")

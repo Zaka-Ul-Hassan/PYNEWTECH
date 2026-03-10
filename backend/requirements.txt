@@ -1,69 +1,47 @@
-# backend\requirements.txt
+# backend/requirements.txt
+# Environment: Python 3.11.9
 
-# Core backend stack
-sqlalchemy>=2.0,<3.0               # ORM for database models and SQL operations
-pyodbc>=5.0,<6.0                   # SQL Server DB driver (ODBC) for Python 
-fastapi>=0.100.0,<1.0.0            # Web framework for building APIs
-uvicorn>=0.20.0,<1.0.0             # ASGI server to run FastAPI apps
+# Core Backend Stack
+fastapi>=0.109.0,<1.0.0            # High-performance API framework (Pydantic v2 support)
+uvicorn[standard]>=0.27.0,<1.0.0   # ASGI server with standard speed-up dependencies
+sqlalchemy>=2.0.25,<3.0.0          # Modern 2.0+ ORM (Type-safe and sync/async support)
+pyodbc>=5.1.0,<6.0.0               # SQL Server driver (ODBC)
+alembic>=1.13.0,<2.0.0             # Database migrations
 
-# Authentication & security
-passlib>=1.3.0,<2.0.0              # Password hashing utilities
-pydantic>=1.10.0,<2.0.0            # Data validation and settings management
-email-validator>=1.1.0,<2.0.0      # Email format validation for pydantic models
-bcrypt>=3.1.0,<4.0.0               # Low-level password hashing used by passlib
-python-jose[cryptography]>=3.2.0,<3.3.0  # JWT encoding and decoding (security)
+# Security & Authentication
+# Note: bcrypt is pinned to 4.3.0 to prevent a "password too long" bug in passlib 1.7.4
+bcrypt==4.3.0                      
+passlib[bcrypt]>=1.7.4,<2.0.0      # Password hashing
+python-jose[cryptography]>=3.3.0   # JWT handling
+pydantic[email]>=2.6.0,<3.0.0      # Modern Pydantic v2 validation
+python-multipart>=0.0.9,<0.1.0     # Form-data & file upload handling
 
-# Database migration
-alembic>=1.11.0,<2.0.0             # Database migration tool for SQLAlchemy
+# AI, LLM & Agentic Tools (MCP)
+langchain>=0.2.0,<0.3.0            # Orchestration framework
+langchain-groq>=0.1.0              # Groq LPU integration
+cohere>=5.5.0,<6.0.0               # Official SDK for Command R+
+mcp>=1.2.0,<2.0.0                  # Model Context Protocol for AI tools
+httpx[http2]>=0.27.0,<1.0.0        # Async HTTP client (Better than requests for FastAPI)
+qdrant-client>=1.8.0,<2.0.0        # Vector DB for RAG
+google-api-python-client>=2.120.0  # Search APIs
 
+# File Processing & Generation
+PyMuPDF>=1.24.0,<1.25.0            # PDF text extraction (high speed)
+python-docx>=1.1.0,<1.2.0          # Word document handling
+weasyprint>=61.0,<63.0             # HTML to PDF (Requires Pango installed on OS)
+pdfkit==1.0.0                      # Alternative HTML to PDF (Requires wkhtmltopdf)
 
-# File handling
-python-multipart>=0.0.6,<0.1       # For handling form-data/file uploads
-PyMuPDF>=1.24.1,<1.25              # For extracting text from PDFs
-python-docx>=1.1.0,<1.2            # For reading/writing .docx files and extract
+# Automation & Email
+pyautogui>=0.9.54,<1.0.0           # Desktop/Screen automation
+selenium>=4.18.0,<5.0.0            # Browser automation
+webdriver-manager>=4.0.0           # Automatic driver management
+sendgrid>=6.11.0,<7.0.0            # Cold outreach/Transactional email
+imap-tools>=1.5.0,<2.0.0           # Advanced email reading
 
-# Scheduling
-apscheduler>=3.9,<4.0              # Task scheduler
-tzlocal>=3.0                       # Required by apscheduler
-
-# Security & HTML sanitization
-bleach>=6.1.0,<7.0.0               # HTML sanitizer
-tinycss2>=1.2.1,<2.0               # Required for CSS sanitization with bleach
-
-# Email tools
-imap-tools>=1.0,<2.0               # IMAP email reading client
-
-# Optional utility packages (if needed)
-itsdangerous>=2.1,<3.0             # For secure tokens (e.g., password reset)
-
-# Cohere AI SDK for chat and generation
-cohere>=5.0.0,<6.0.0               # Official Python SDK for Cohere (supports Command R+ models)
-python-dotenv>=1.0,<2.0             # To load API keys from .env files
-aiohttp>=3.8,<4.0                   # For making asynchronous HTTP requests (e.g., to Cohere API)
-
-google-api-python-client>=2.120.0,<3.0     # Google Custom Search API client
-
-# HTML to PDF converter
-pdfkit==1.0.0  
-weasyprint>=58.0,<60.0
-
-# Qdrant vector database client
-qdrant-client>=1.8.0,<2.0.0
-
-# SendGrid official library for sending emails
-sendgrid>=6.11.0,<7.0.0
-
-#dotenv for environment variable management
-debugpy>=1.0,<2.0
-
-# Data handling
-pandas>=1.5.0,<3.0.0
-# zoom bot dependencies
-
-# GUI automation: control screen, mouse, and send keystrokes
-pyautogui>=0.9.54,<1.0.0
-
-# Browser automation: automate web browsers
-selenium>=4.10.0,<5.0.0
-webdriver-manager>=4.0.0,<5.0.0
-
+# Utilities & Scheduling
+apscheduler>=3.10.0,<4.0.0         # Cron/Task scheduling
+tzlocal>=5.0                       # Timezone support for scheduler
+python-dotenv>=1.0.1,<2.0.0        # Env variable management
+pandas>=2.1.0,<3.0.0               # Data manipulation
+bleach>=6.1.0                      # HTML sanitization
+debugpy>=1.8.0                     # Remote debugging for VS Code
