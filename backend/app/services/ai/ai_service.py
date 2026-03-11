@@ -43,4 +43,6 @@ def get_ai_response(prompt: str) -> ResponseSchema:
             message=f"Error generating AI response: {str(e)}",
             data=None
         )
+    
+    
 

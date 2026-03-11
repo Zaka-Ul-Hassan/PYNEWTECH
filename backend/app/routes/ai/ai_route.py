@@ -7,8 +7,14 @@ from app.services.ai import ai_service
 
 router = APIRouter()
 
-# AI Response Endpoint
+
+# Groq AI completion endpoint
 @router.post("/response", response_model=ResponseSchema)
 def get_ai_response(prompt: str):
-    response = ai_service.get_ai_response(prompt)
-    return response
+    """
+    Single-turn AI completion — no tools, no history.
+    Send a plain string prompt, receive a plain text response.
+    """
+    return ai_service.get_ai_response(prompt)
+
+
