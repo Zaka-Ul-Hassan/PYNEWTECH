@@ -1,0 +1,63 @@
+<!-- frontend\html\mcp_bot.html -->
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>MCP Bot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="../css/mcp_bot.css"/>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-logo">⚡</div>
+    <div>
+      <div class="topbar-name">MCP Assistant</div>
+      <div class="topbar-sub">Model Context Protocol · Human-in-the-loop</div>
+    </div>
+    <div class="topbar-status">Online</div>
+  </header>
+
+  <!-- Registered MCP tools -->
+  <div class="toolbar">
+    <div class="tp">✉️ send_email</div>
+    <div class="tp">🎥 join_zoom_as_me</div>
+    <div class="tp">🤖 join_zoom_as_bot</div>
+    <div class="tp">📝 get_zoom_transcript</div>
+  </div>
+
+  <!-- Message feed -->
+  <main id="feed" class="feed">
+    <div id="welcome" class="welcome">
+      <div class="welcome-icon">⚡</div>
+      <h2>MCP Assistant</h2>
+      <p>I can send emails and manage Zoom meetings.<br>
+         For every action I'll show you the details and ask for confirmation first.</p>
+      <div class="chips">
+        <div class="chip" onclick="useChip('Send an email to alice@example.com with subject Hello and say hi from me')">✉️ Send email</div>
+        <div class="chip" onclick="useChip('Join Zoom meeting 123 456 789 password abc123')">🎥 Join meeting</div>
+        <div class="chip" onclick="useChip('Add a bot named Recorder to Zoom meeting 987654321')">🤖 Add bot</div>
+        <div class="chip" onclick="useChip('Get the transcript of meeting 555000111 for 30 minutes')">📝 Get transcript</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Input -->
+  <footer class="input-bar">
+    <div class="input-wrap">
+      <textarea id="inp" rows="1" placeholder="Ask me to send an email, join a Zoom meeting…" autocomplete="off" spellcheck="false"></textarea>
+      <button class="send" id="send-btn" title="Send">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="hint"><kbd>Enter</kbd> send · <kbd>Shift+Enter</kbd> new line</div>
+  </footer>
+
+</div>
+<script src="../js/mcp_bot.js"></script>
+</body>
+</html>
