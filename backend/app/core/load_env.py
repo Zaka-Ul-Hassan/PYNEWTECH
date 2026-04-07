@@ -37,3 +37,6 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 # Groq API Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv("GROQ_MODEL")
+
+# Meta Credentials
+WEBHOOK_VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN")
