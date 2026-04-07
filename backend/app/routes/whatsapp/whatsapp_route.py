@@ -20,5 +20,4 @@ async def verify_webhook(
 @router.post("/webhook", response_model=ResponseSchema)
 async def receive_whatsapp_message(request: Request):
     result = await whatsapp_service.process_whatsapp_message_service(request)
-
-    return ResponseSchema(**result)
+    return result

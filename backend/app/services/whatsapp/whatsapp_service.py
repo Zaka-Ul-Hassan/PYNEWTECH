@@ -2,6 +2,7 @@
 
 from fastapi import Request, Response
 from app.core.load_env import WEBHOOK_VERIFY_TOKEN
+from app.schemas.response_schema import ResponseSchema
 
 
 def verify_webhook_service(mode: str, token: str, challenge: str):
@@ -16,8 +17,8 @@ async def process_whatsapp_message_service(request: Request):
 
     print(f"Incoming: {body}")
 
-    return {
-        "status": True,
-        "message": "Message received successfully",
-        "data": {"event": "message_received"}
-    }
+    return ResponseSchema(
+        status=True,
+        message="Message received successfully",
+        data={"event": "message_received"}
+    )
