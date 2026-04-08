@@ -12,7 +12,7 @@ from app.routes.zoom import zoom_route
 from app.routes.email import email_route
 from app.routes.ai import ai_route
 from app.routes.mcp import chat_route
-from app.routes.whatsapp import whatsapp_route
+from app.routes.whatsapp import meta_whatsapp_route
 
 
 
@@ -43,7 +43,7 @@ app.include_router(zoom_route.router,prefix="/zoom",tags=["Zoom"])
 app.include_router(email_route.router,prefix="/email",tags=["Email"])
 app.include_router(ai_route.router,prefix="/ai",tags=["AI"])
 app.include_router(chat_route.router,prefix="/mcp",tags=["MCP Chat"])
-app.include_router(whatsapp_route.router,prefix="/whatsapp",tags=["WhatsApp"])
+app.include_router(meta_whatsapp_route.router,prefix="/whatsapp",tags=["Meta WhatsApp"])
 
 app.mount("/mcp", sse_app)
 

@@ -1,4 +1,4 @@
-# backend\app\services\whatsapp\whatsapp_service.py
+# backend\app\services\whatsapp\meta_whatsapp_service.py
 
 from fastapi import Request, Response
 from app.core.load_env import WEBHOOK_VERIFY_TOKEN
