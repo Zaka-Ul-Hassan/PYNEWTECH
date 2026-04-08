@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Request, Query
 
 from app.schemas.response_schema import ResponseSchema
-from app.services.whatsapp import whatsapp_service
+from app.services.whatsapp import meta_whatsapp_service
 
 router = APIRouter()
 
@@ -14,10 +14,10 @@ async def verify_webhook(
     token: str = Query(None, alias="hub.verify_token"),
     challenge: str = Query(None, alias="hub.challenge")
 ):
-    return whatsapp_service.verify_webhook_service(mode, token, challenge)
+    return meta_whatsapp_service.verify_webhook_service(mode, token, challenge)
 
 
 @router.post("/webhook", response_model=ResponseSchema)
 async def receive_whatsapp_message(request: Request):
-    result = await whatsapp_service.process_whatsapp_message_service(request)
+    result = await meta_whatsapp_service.process_whatsapp_message_service(request)
     return result
