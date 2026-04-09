@@ -39,4 +39,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv("GROQ_MODEL")
 
 # Meta Credentials
+WHATSAPP_ACCESS_TOKEN= os.getenv("WHATSAPP_ACCESS_TOKEN")
 WEBHOOK_VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN")
+META_WHATSAPP_API_URL = os.getenv("META_WHATSAPP_API_URL", "https://graph.facebook.com/v25.0")
+PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
