@@ -28,7 +28,6 @@ async def receive_whatsapp_message(request: Request):
 async def get_join_requests(group_id: str):
     return await meta_whatsapp_service.get_join_requests(group_id)
 
-
 @router.post("/groups/{group_id}/approve-join", response_model=ResponseSchema)
 async def approve_join_requests(group_id: str, request: Request):
     body = await request.json()
